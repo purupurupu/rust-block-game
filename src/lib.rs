@@ -250,6 +250,44 @@ impl Game {
         );
     }
 
+    // 左に移動
+    pub fn move_left(&mut self) {
+        if let Some(_) = &self.current_tetromino {
+            if self.current_pos.0 > 0 {
+                self.current_pos.0 -= 1;
+                self.draw();
+            }
+        }
+    }
+
+    // 右に移動
+    pub fn move_right(&mut self) {
+        if let Some(tetromino) = &self.current_tetromino {
+            if self.current_pos.0 + tetromino.cells.len() < self.board_width {
+                self.current_pos.0 += 1;
+                self.draw();
+            }
+        }
+    }
+
+    // 下に移動
+    pub fn move_down(&mut self) {
+        if let Some(tetromino) = &self.current_tetromino {
+            if self.current_pos.1 + tetromino.cells.len() < self.board_height {
+                self.current_pos.1 += 1;
+                self.draw();
+            }
+        }
+    }
+
+    // テトリミノを回転
+    pub fn rotate(&mut self) {
+        if let Some(tetromino) = &mut self.current_tetromino {
+            tetromino.rotate();
+            self.draw();
+        }
+    }
+
     // テスト用：テトリミノを生成して表示
     pub fn spawn_test_tetromino(&mut self) {
         let tetromino = Tetromino::new(TetrominoType::T); // Tミノをテスト用に生成

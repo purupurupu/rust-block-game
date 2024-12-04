@@ -6,6 +6,26 @@ async function run() {
     // game.draw_test();
     // game.test_fill();
     game.spawn_test_tetromino();
+
+
+    // キーボードイベントの処理
+    document.addEventListener('keydown', (event) => {
+        switch (event.key) {
+            case 'ArrowLeft':
+                game.move_left();
+                break;
+            case 'ArrowRight':
+                game.move_right();
+                break;
+            case 'ArrowDown':
+                game.move_down();
+                break;
+            case 'ArrowUp':    // 上キーで回転
+                game.rotate();
+                break;
+        }
+    });
+
 }
 
 run();

@@ -5,7 +5,7 @@ async function run() {
     const game = new Game();
     // game.draw_test();
     // game.test_fill();
-    game.spawn_test_tetromino();
+    game.spawn_test_mino();
 
 
     // キーボードイベントの処理

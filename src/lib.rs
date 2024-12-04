@@ -9,7 +9,7 @@ pub enum Cell {
 }
 // テトリミノの形状を定義
 #[derive(Clone, Copy, PartialEq)]
-pub enum TetrominoType {
+pub enum BlockType {
     I,
     O,
     T,
@@ -20,16 +20,16 @@ pub enum TetrominoType {
 }
 
 #[derive(Clone)]
-pub struct Tetromino {
-    tetromino_type: TetrominoType,
+pub struct BlockShape {
+    block_type: BlockType,
     cells: Vec<Vec<bool>>, // trueなら埋まっているセル
     color: u8,
 }
 
-impl Tetromino {
-    pub fn new(tetromino_type: TetrominoType) -> Self {
-        let (cells, color) = match tetromino_type {
-            TetrominoType::I => (
+impl BlockShape {
+    pub fn new(block_type: BlockType) -> Self {
+        let (cells, color) = match block_type {
+            BlockType::I => (
                 vec![
                     vec![false, false, false, false],
                     vec![true, true, true, true],
@@ -38,11 +38,11 @@ impl Tetromino {
                 ],
                 0, // cyan
             ),
-            TetrominoType::O => (
+            BlockType::O => (
                 vec![vec![true, true], vec![true, true]],
                 1, // yellow
             ),
-            TetrominoType::T => (
+            BlockType::T => (
                 vec![
                     vec![false, true, false],
                     vec![true, true, true],
@@ -50,7 +50,7 @@ impl Tetromino {
                 ],
                 2, // purple
             ),
-            TetrominoType::S => (
+            BlockType::S => (
                 vec![
                     vec![false, true, true],
                     vec![true, true, false],
@@ -58,7 +58,7 @@ impl Tetromino {
                 ],
                 5, // green
             ),
-            TetrominoType::Z => (
+            BlockType::Z => (
                 vec![
                     vec![true, true, false],
                     vec![false, true, true],
@@ -66,7 +66,7 @@ impl Tetromino {
                 ],
                 6, // red
             ),
-            TetrominoType::J => (
+            BlockType::J => (
                 vec![
                     vec![true, false, false],
                     vec![true, true, true],
@@ -74,7 +74,7 @@ impl Tetromino {
                 ],
                 3, // blue
             ),
-            TetrominoType::L => (
+            BlockType::L => (
                 vec![
                     vec![false, false, true],
                     vec![true, true, true],
@@ -84,8 +84,8 @@ impl Tetromino {
             ),
         };
 
-        Tetromino {
-            tetromino_type,
+        BlockShape {
+            block_type,
             cells,
             color,
         }
@@ -115,7 +115,7 @@ pub struct Game {
     board_height: usize,
     cell_size: f64,
 
-    current_tetromino: Option<Tetromino>,
+    current_block: Option<BlockShape>,
     current_pos: (usize, usize), // (x, y)
 }
 
@@ -154,7 +154,7 @@ impl Game {
             board_width,
             board_height,
             cell_size,
-            current_tetromino: None,
+            current_block: None,
             current_pos: (0, 0),
         })
     }
@@ -207,14 +207,14 @@ impl Game {
             }
         }
 
-        if let Some(tetromino) = &self.current_tetromino {
-            for (i, row) in tetromino.cells.iter().enumerate() {
+        if let Some(block) = &self.current_block {
+            for (i, row) in block.cells.iter().enumerate() {
                 for (j, &is_filled) in row.iter().enumerate() {
                     if is_filled {
                         let x = self.current_pos.0 + j;
                         let y = self.current_pos.1 + i;
 
-                        self.context.set_fill_style_str(match tetromino.color {
+                        self.context.set_fill_style_str(match block.color {
                             0 => "cyan",
                             1 => "yellow",
                             2 => "purple",
@@ -252,7 +252,7 @@ impl Game {
 
     // 左に移動
     pub fn move_left(&mut self) {
-        if let Some(_) = &self.current_tetromino {
+        if let Some(_) = &self.current_block {
             if self.current_pos.0 > 0 {
                 self.current_pos.0 -= 1;
                 self.draw();
@@ -262,8 +262,8 @@ impl Game {
 
     // 右に移動
     pub fn move_right(&mut self) {
-        if let Some(tetromino) = &self.current_tetromino {
-            if self.current_pos.0 + tetromino.cells.len() < self.board_width {
+        if let Some(block) = &self.current_block {
+            if self.current_pos.0 + block.cells.len() < self.board_width {
                 self.current_pos.0 += 1;
                 self.draw();
             }
@@ -272,26 +272,26 @@ impl Game {
 
     // 下に移動
     pub fn move_down(&mut self) {
-        if let Some(tetromino) = &self.current_tetromino {
-            if self.current_pos.1 + tetromino.cells.len() < self.board_height {
+        if let Some(block) = &self.current_block {
+            if self.current_pos.1 + block.cells.len() < self.board_height {
                 self.current_pos.1 += 1;
                 self.draw();
             }
         }
     }
 
-    // テトリミノを回転
+    // ミノを回転
     pub fn rotate(&mut self) {
-        if let Some(tetromino) = &mut self.current_tetromino {
-            tetromino.rotate();
+        if let Some(block) = &mut self.current_block {
+            block.rotate();
             self.draw();
         }
     }
 
-    // テスト用：テトリミノを生成して表示
-    pub fn spawn_test_tetromino(&mut self) {
-        let tetromino = Tetromino::new(TetrominoType::T); // Tミノをテスト用に生成
-        self.current_tetromino = Some(tetromino);
+    // テスト用：ミノを生成して表示
+    pub fn spawn_test_mino(&mut self) {
+        let block = BlockShape::new(BlockType::T); // ミノをテスト用に生成
+        self.current_block = Some(block);
         self.current_pos = (self.board_width / 2 - 2, 0); // 上端中央に配置
         self.draw();
     }

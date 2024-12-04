@@ -4,7 +4,8 @@ async function run() {
     await init();
     const game = new Game();
     // game.draw_test();
-    game.test_fill();
+    // game.test_fill();
+    game.spawn_test_tetromino();
 }
 
 run();

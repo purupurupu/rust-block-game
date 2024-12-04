@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
 
@@ -5,6 +6,104 @@ use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
 pub enum Cell {
     Empty,
     Filled(u8),
+}
+// テトリミノの形状を定義
+#[derive(Clone, Copy, PartialEq)]
+pub enum TetrominoType {
+    I,
+    O,
+    T,
+    S,
+    Z,
+    J,
+    L,
+}
+
+#[derive(Clone)]
+pub struct Tetromino {
+    tetromino_type: TetrominoType,
+    cells: Vec<Vec<bool>>, // trueなら埋まっているセル
+    color: u8,
+}
+
+impl Tetromino {
+    pub fn new(tetromino_type: TetrominoType) -> Self {
+        let (cells, color) = match tetromino_type {
+            TetrominoType::I => (
+                vec![
+                    vec![false, false, false, false],
+                    vec![true, true, true, true],
+                    vec![false, false, false, false],
+                    vec![false, false, false, false],
+                ],
+                0, // cyan
+            ),
+            TetrominoType::O => (
+                vec![vec![true, true], vec![true, true]],
+                1, // yellow
+            ),
+            TetrominoType::T => (
+                vec![
+                    vec![false, true, false],
+                    vec![true, true, true],
+                    vec![false, false, false],
+                ],
+                2, // purple
+            ),
+            TetrominoType::S => (
+                vec![
+                    vec![false, true, true],
+                    vec![true, true, false],
+                    vec![false, false, false],
+                ],
+                5, // green
+            ),
+            TetrominoType::Z => (
+                vec![
+                    vec![true, true, false],
+                    vec![false, true, true],
+                    vec![false, false, false],
+                ],
+                6, // red
+            ),
+            TetrominoType::J => (
+                vec![
+                    vec![true, false, false],
+                    vec![true, true, true],
+                    vec![false, false, false],
+                ],
+                3, // blue
+            ),
+            TetrominoType::L => (
+                vec![
+                    vec![false, false, true],
+                    vec![true, true, true],
+                    vec![false, false, false],
+                ],
+                4, // orange
+            ),
+        };
+
+        Tetromino {
+            tetromino_type,
+            cells,
+            color,
+        }
+    }
+
+    // 時計回りに90度回転
+    pub fn rotate(&mut self) {
+        let n = self.cells.len();
+        let mut rotated = vec![vec![false; n]; n];
+
+        for i in 0..n {
+            for j in 0..n {
+                rotated[j][n - 1 - i] = self.cells[i][j];
+            }
+        }
+
+        self.cells = rotated;
+    }
 }
 
 #[wasm_bindgen]
@@ -15,6 +114,9 @@ pub struct Game {
     board_width: usize,
     board_height: usize,
     cell_size: f64,
+
+    current_tetromino: Option<Tetromino>,
+    current_pos: (usize, usize), // (x, y)
 }
 
 #[wasm_bindgen]
@@ -52,6 +154,8 @@ impl Game {
             board_width,
             board_height,
             cell_size,
+            current_tetromino: None,
+            current_pos: (0, 0),
         })
     }
 
@@ -102,7 +206,37 @@ impl Game {
                 }
             }
         }
-        // デバッグ情報を出力
+
+        if let Some(tetromino) = &self.current_tetromino {
+            for (i, row) in tetromino.cells.iter().enumerate() {
+                for (j, &is_filled) in row.iter().enumerate() {
+                    if is_filled {
+                        let x = self.current_pos.0 + j;
+                        let y = self.current_pos.1 + i;
+
+                        self.context.set_fill_style_str(match tetromino.color {
+                            0 => "cyan",
+                            1 => "yellow",
+                            2 => "purple",
+                            3 => "blue",
+                            4 => "orange",
+                            5 => "green",
+                            6 => "red",
+                            _ => "white",
+                        });
+
+                        self.context.fill_rect(
+                            x as f64 * self.cell_size,
+                            y as f64 * self.cell_size,
+                            self.cell_size,
+                            self.cell_size,
+                        );
+                    }
+                }
+            }
+        }
+
+        // デバッグ用
         web_sys::console::log_1(
             &format!(
                 "Debug Info:\nBoard: {}x{}\nCell Size: {}\nCanvas: {}x{}",
@@ -114,6 +248,14 @@ impl Game {
             )
             .into(),
         );
+    }
+
+    // テスト用：テトリミノを生成して表示
+    pub fn spawn_test_tetromino(&mut self) {
+        let tetromino = Tetromino::new(TetrominoType::T); // Tミノをテスト用に生成
+        self.current_tetromino = Some(tetromino);
+        self.current_pos = (self.board_width / 2 - 2, 0); // 上端中央に配置
+        self.draw();
     }
 
     pub fn test_fill(&mut self) {
